@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+{#    current_user 当前用户的属性#}
+    <h1>Hello,{{ current_user.username }}!</h1>
+
+    {% for items in posts %}
+        <div><p>{{ items.author.username }} says: <b>{{ items.body }}</b></p></div>
+    {% endfor %}
+{% endblock %}
