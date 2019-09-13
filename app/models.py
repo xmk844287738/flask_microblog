@@ -5,7 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db,login
 
 
-
+#关注者关联表
+followers = db.Table(
+    'followers',
+    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')), #别人关注你的ID
+    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))  #你关注别人的IP
+    )
 
 
 # 用户模型
@@ -21,8 +26,20 @@ class User(UserMixin,db.Model):     #有current_user的属性
     about_me = db.Column(db.String(140))    #个人签名
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)     #上一次登录时间  (utcnow 世界时间)
 
+    # 关注的与被关注的 多对多关系模型
+    followed = db.relationship(
+        'User',
+        secondary=followers,
+        primaryjoin=(followers.c.follower_id == id),
+        secondaryjoin=(followers.c.followed_id == id),
+        backref=db.backref('followers', lazy='dynamic'),    #反向引用
+        lazy='dynamic'
+    )
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
+        # return '<User {}, Email {}, Password_Hash {}, Posts {}'.format(self.username, self.email, self.password_hash,self.posts)
+
 
     def set_password(self, password):   # 加密密码
         self.password_hash = generate_password_hash(password)
@@ -34,9 +51,27 @@ class User(UserMixin,db.Model):     #有current_user的属性
     def avatar(self, size):
         # lower() 转成小写; encode字符串转字节;(dencode 字节转字符串)
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
-            digest, size)
+        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(digest, size)
 
+# 关注,列表追加 append()方法
+    def follow(self, user):
+        if not self.is_following(user):
+            self.followed.append(user)
+# 取消关注  列表移除 remove()方法
+    def unfollow(self, user):
+        if self.is_following(user):
+            self.followed.remove(user)
+
+# 重点！！！！！！
+    def is_following(self, user):
+        # filter过滤
+        return self.followed.filter(followers.c.followed_id==user.id).count()>0
+
+    def followed_posts(self):
+        return Post.query.join(
+            followers, (followers.c.followed_id == Post.user_id)).filter(       # Post.user_id 所有帖子用户的id等于followed_id 所有被关注者的id(所有帖子被关注的帖子用户id)
+                followers.c.follower_id == self.id).order_by(       # follower_id 关注者id等于 目标者用户者的id
+                    Post.timestamp.desc())      #按照时间先、后排序,最后发帖的帖子排在在前
 
 
 
@@ -49,8 +84,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __repr__(self):
-        # return '<Post {}'.format(self.body)
-        return '<User {}, Email {}, Password_Hash {}, Posts {}'.format(self.username, self.email, self.password_hash,self.posts)
+        return '<Post {}'.format(self.body)
 
 
 @login.user_loader
