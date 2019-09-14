@@ -36,4 +36,12 @@
 {#        user.html模板要调用_post.html的子模板，得使用Jinja2include语句#}
         {% include "_post.html" %}
     {% endfor%}
+
+    {#    帖子分页导航#}
+    {% if prev_url %}
+    <a href="{{ prev_url }}">Newer posts</a>
+    {% endif %}
+    {% if next_url %}
+    <a href="{{ next_url }}">Older posts</a>
+    {% endif %}
 {% endblock %}

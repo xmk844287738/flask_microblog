@@ -70,11 +70,17 @@ class User(UserMixin,db.Model):     #有current_user的属性
         # filter过滤
         return self.followed.filter(followers.c.followed_id==user.id).count()>0
 
-    def followed_posts(self):
-        return Post.query.join(
-            followers, (followers.c.followed_id == Post.user_id)).filter(       # Post.user_id 所有帖子用户的id等于followed_id 所有被关注者的id(所有帖子被关注的帖子用户id)
-                followers.c.follower_id == self.id).order_by(       # follower_id 关注者id等于 目标者用户者的id
-                    Post.timestamp.desc())      #按照时间先、后排序,最后发帖的帖子排在在前
+    # def followed_posts(self):
+    #     return Post.query.join(
+    #         followers, (followers.c.followed_id == Post.user_id)).filter(       # Post.user_id 所有帖子用户的id等于followed_id 所有被关注者的id(所有帖子被关注的帖子用户id)
+    #             followers.c.follower_id == self.id).order_by(       # follower_id 关注者id等于 目标者用户者的id
+    #                 Post.timestamp.desc())      #按照时间先、后排序,最后发帖的帖子排在在前
+
+    def followed_posts(self):   #被关注者的帖子
+        followed = Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(
+            followers.c.follower_id == self.id)
+        own = Post.query.filter_by(user_id=self.id)
+        return followed.union(own).order_by(Post.timestamp.desc())
 
     def get_reset_password_token(self, expires_in=600):
         # encode 字符串转字节

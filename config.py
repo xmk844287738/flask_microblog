@@ -18,3 +18,6 @@ class Config:
     MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')  # 客户端授权密码
+
+    ADMINS = ['your-email@example.com']
+    POSTS_PER_PAGE = 3  # 每页显示三条帖子

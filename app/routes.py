@@ -4,7 +4,7 @@ from werkzeug.urls import url_parse
 from app import db
 from app import app # 从app包中导入 app这个实例
 from app.email import send_password_reset_email
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm, PostForm
 from app.models import User,Post
 from datetime import datetime
 
@@ -17,25 +17,52 @@ def before_request():
         db.session.commit()
 
 #3个路由视图函数
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods= ['GET', 'POST'])
 @login_required
 def index():
-    # user = {'username': 'Miguel'}
-    # title='Home'
-    posts = [  # 创建一个列表：帖子。里面元素是两个字典，每个字典里元素还是字典，分别作者、帖子内容。
-        {
-            'author': {'username': 'John'},
-            'body': 'Beautiful day in Portland!'
-        },
-    {
-        'author': {'username': 'Susan'},
-        'body': 'The Avengers movie was so cool!'
-    }
-    ]
+    # user = {'username': 'Miguel'}     title='Home'
+    form = PostForm()
+    if form.validate_on_submit():   #post请求
+        post = Post(body=form.post.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash('Your post is now live!')
+        return redirect(url_for('index'))   # redirect 重定向 两次请求; 避免无意中刷新页面时，插入重复的帖子
+    #get 请求
+    # posts = [  # 创建一个列表：帖子。里面元素是两个字典，每个字典里元素还是字典，分别作者、帖子内容。
+    #     {
+    #         'author': {'username': 'John'},
+    #         'body': 'Beautiful day in Portland!'
+    #     },
+    # {
+    #     'author': {'username': 'Susan'},
+    #     'body': 'The Avengers movie was so cool!'
+    # }
+    # ]
+
+# #   循环当前用户所发的帖子
+#     posts = current_user.followed_posts().all()
 
     # return render_template('index.html', user=user,posts=posts,title='Home')
-    return render_template('index.html', posts=posts)
+
+    page = request.args.get('page', 1, type=int)
+    posts = current_user.followed_posts().paginate(page, app.config['POSTS_PER_PAGE'], False)
+    next_url = url_for('index', page=posts.next_num) if posts.has_next else None
+    prev_url = url_for('index', page=posts.prev_num) if posts.has_prev else None
+    return render_template('index.html', title='Home Page', form=form, posts=posts.items, next_url=next_url,prev_url=prev_url)
+
+
+# 前台帖子展示视图函数
+@app.route('/explore')
+@login_required
+def explore():
+    #每页显示3条帖子, 帖子配置数据在 config.py
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.timestamp.desc()).paginate(page, app.config['POSTS_PER_PAGE'], False)
+    next_url = url_for('explore', page=posts.next_num) if posts.has_next else None
+    prev_url = url_for('explore', page=posts.prev_num) if posts.has_prev else None
+    return render_template('index.html', title='Explore', posts=posts.items, next_url=next_url, prev_url=prev_url)
 
 # 登录视图函数
 @app.route('/login',methods=['GET', 'POST'])
@@ -104,11 +131,16 @@ def register():
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = [
-        {'author': user, 'body': 'Test post #1'},
-        {'author': user, 'body': 'Test post #2'}
-    ]
-    return render_template('user.html', user=user, posts=posts)
+    # posts = [
+    #     {'author': user, 'body': 'Test post #1'},
+    #     {'author': user, 'body': 'Test post #2'}
+    # ]
+
+    page = request.args.get('page', 1, type=int)
+    posts = user.posts.order_by(Post.timestamp.desc()).paginate(page, app.config['POSTS_PER_PAGE'], False)
+    next_url = url_for('user', username=user.username, page=posts.next_num) if posts.has_next else None
+    prev_url = url_for('user', username=user.username, page=posts.prev_num) if posts.has_prev else None
+    return render_template('user.html', user=user, posts=posts.items, next_url=next_url, prev_url=prev_url)
 
 
 # 用户编辑页视图函数
@@ -190,3 +222,6 @@ def reset_password(token):
         flash('Your password has been reset.')
         return redirect(url_for('login'))
     return render_template('reset_password.html', form=form)
+
+
+

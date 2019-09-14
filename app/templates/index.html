@@ -3,7 +3,30 @@
 {#    current_user 当前用户的属性#}
     <h1>Hello,{{ current_user.username }}!</h1>
 
-    {% for items in posts %}
-        <div><p>{{ items.author.username }} says: <b>{{ items.body }}</b></p></div>
+    {% if form %}
+    {#    帖子提交表单#}
+         <form action="" method="post">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.post.label }}<br>
+                {{ form.post(cols=32, rows=4) }}<br>
+                {% for error in form.post.errors %}
+                    <span style="color:red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit() }}</p>
+        </form>
+    {% endif %}
+
+{#    循环用户所发的帖子#}
+   {% for post in posts %}
+        {% include '_post.html' %}
     {% endfor %}
+{#    帖子分页导航#}
+    {% if prev_url %}
+    <a href="{{ prev_url }}">Newer posts</a>
+    {% endif %}
+    {% if next_url %}
+    <a href="{{ next_url }}">Older posts</a>
+    {% endif %}
 {% endblock %}

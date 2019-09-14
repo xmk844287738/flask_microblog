@@ -78,7 +78,7 @@ class UserModelCase(unittest.TestCase):
         f2 = u2.followed_posts().all()
         f3 = u3.followed_posts().all()
         f4 = u4.followed_posts().all()
-        # 有错误！！！！！
+        # 错误修复,问题原因 followed_posts() 方法修正
         self.assertEqual(f1, [p2, p4, p1])
         self.assertEqual(f2, [p2, p3])
         self.assertEqual(f3, [p3, p4])
@@ -86,5 +86,3 @@ class UserModelCase(unittest.TestCase):
 
 if __name__ == '__main__':
         unittest.main(verbosity=2)
-
-# P35分钟
