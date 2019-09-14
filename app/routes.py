@@ -3,19 +3,20 @@ from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
 from app import db
 from app import app # 从app包中导入 app这个实例
-from app.forms import LoginForm, RegistrationForm,EditProfileForm
+from app.email import send_password_reset_email
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
 from app.models import User,Post
 from datetime import datetime
 
 
-
+# 最后一次登录的时间视图函数
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
-#3个路由
+#3个路由视图函数
 @app.route('/')
 @app.route('/index')
 @login_required
@@ -79,7 +80,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-# 注册页
+# 注册页视图函数
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -98,7 +99,7 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-# 用户展示页面
+# 用户展示页面视图函数
 @app.route('/user/<username>')
 @login_required
 def user(username):
@@ -110,7 +111,7 @@ def user(username):
     return render_template('user.html', user=user, posts=posts)
 
 
-# 用户编辑页
+# 用户编辑页视图函数
 @app.route('/edit_profile',methods=['GET','POST'])
 @login_required
 def edit_profile():
@@ -126,3 +127,66 @@ def edit_profile():
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
     return render_template('edit_profile.html', title='Edit Profile', form=form)
+
+# 关注页视图函数
+@app.route('/follow/<username>')
+@login_required
+def follow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User {} not found.'.format(username))
+        return redirect(url_for('index'))
+    if user == current_user:
+        flash('You cannot follow yourself!')
+        return redirect(url_for('user', username=username))
+    current_user.follow(user)
+    db.session.commit()
+    flash('You are following {}!'.format(username))
+    return redirect(url_for('user', username=username))
+
+# 取消关注页视图函数
+@app.route('/unfollow/<username>')
+@login_required
+def unfollow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User {} not found.'.format(username))
+        return redirect(url_for('index'))
+    #current_user 判断是否为当前用户
+    if user == current_user:
+        flash('You cannot unfollow yourself!')
+        return redirect(url_for('user', username=username))
+    current_user.unfollow(user)
+    db.session.commit()
+    flash('You are not following {}.'.format(username))
+    return redirect(url_for('user', username=username))
+
+# 重置用户密码请求视图函数
+@app.route('/reset_password_request', methods=['GET','POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = ResetPasswordRequestForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            send_password_reset_email(user)
+        flash('Check your email for the instructions to reset your password')
+        return redirect(url_for('login'))
+    return render_template('reset_password_request.html', title='Reset Password', form=form)
+
+# 重置用户密码视图函数
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    user = User.verify_reset_password_token(token)  #staticmethod 静态方法 验证用户的 token
+    if not user:
+        return redirect(url_for('index'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():   #进行表单验证
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash('Your password has been reset.')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html', form=form)

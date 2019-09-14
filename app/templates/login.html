@@ -25,4 +25,10 @@
 
 {#    用于发送新用户到注册表单#}
     <p>New User? <a href="{{ url_for('register') }}">Click to Register!</a></p>
+
+{#    重置用户密码#}
+    <p>
+        Forgot Your Password?
+        <a href="{{ url_for('reset_password_request') }}">Click to Reset It</a>
+    </p>
 {% endblock %}

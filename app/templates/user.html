@@ -14,11 +14,18 @@
                 {% if user.last_seen %}
                     <p>Last seen on:{{ user.last_seen }}</p>
                 {% endif %}
+
+                <p>{{ user.followers.count() }} followers, {{ user.followed.count() }} following.</p>
+
 {#                判断当前浏览对象用户是不是属于此帖子的用户#}
-                 {% if user == current_user %}
-                    <p>
-                        <a href="{{ url_for('edit_profile') }}">Edit your profile</a>
-                    </p>
+                {% if user == current_user %}
+                    <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
+{#                  如果当前浏览的用户不自己，即可关注  #}
+                {% elif not current_user.is_following(user) %}
+                    <p><a href="{{ url_for('follow', username=user.username) }}">Follow</a></p>
+                {% else %}
+{#                    如果已经关注，可以取消关注#}
+                    <p><a href="{{ url_for('unfollow', username=user.username) }}">Unfollow</a></p>
                 {% endif %}
             </td>
         </tr>

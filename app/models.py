@@ -1,8 +1,11 @@
 from _md5 import md5
 from datetime import datetime
+from time import time
+import jwt
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db,login
+from app import db, login, app
+
 
 
 #关注者关联表
@@ -73,7 +76,20 @@ class User(UserMixin,db.Model):     #有current_user的属性
                 followers.c.follower_id == self.id).order_by(       # follower_id 关注者id等于 目标者用户者的id
                     Post.timestamp.desc())      #按照时间先、后排序,最后发帖的帖子排在在前
 
+    def get_reset_password_token(self, expires_in=600):
+        # encode 字符串转字节
+        return jwt.encode(
+            {'reset_password': self.id, 'exp': time() + expires_in},
+            app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')            # decode 字节转字符串
 
+    @staticmethod
+    def verify_reset_password_token(token):
+        try:
+            id = jwt.decode(token, app.config['SECRET_KEY'],
+                            algorithms=['HS256'])['reset_password']
+        except:
+            return
+        return User.query.get(id)
 
 
 # 帖子模型
