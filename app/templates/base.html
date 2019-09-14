@@ -8,6 +8,11 @@
     {% endif %}
 {% endblock %}
 
+{% block scripts %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+{% endblock %}
+
 {#网页导航栏#}
 {% block navbar %}
     <nav class="navbar navbar-default">

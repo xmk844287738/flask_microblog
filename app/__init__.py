@@ -2,6 +2,7 @@ from flask import Flask
 from flask_mail import Mail
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 # from app import routes,models,errors
@@ -23,7 +24,12 @@ login.login_view = 'login'
 
 # 创建一个Mail类
 mail = Mail(app)
+
+# 引入bootstrap 样式
 bootstrap = Bootstrap(app)
+
+# 引入处理时间模块
+moment = Moment(app)
 
 
 # 防止循环导入

@@ -11,7 +11,8 @@
             <a href="{{ url_for('user', username=post.author.username) }}">
                 {{ post.author.username }}
             </a>
-            says:
+{#            "多久(几分钟)前说说过的话"#}
+            said {{ moment(post.timestamp).fromNow() }}:
             <br>
             {{ post.body }}
         </td>

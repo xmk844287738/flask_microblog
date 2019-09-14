@@ -13,7 +13,8 @@
                 {% endif %}
 {#                 用户上一次登陆的时间#}
                 {% if user.last_seen %}
-                    <p>Last seen on:{{ user.last_seen }}</p>
+{#                   引入 moment 处理时间模块#}
+                    <p>Last seen on:{{ moment(user.last_seen).format('LLL') }}</p>
                 {% endif %}
 {#                判断当前浏览对象用户是不是属于此帖子的用户#}
                 {% if user == current_user %}
