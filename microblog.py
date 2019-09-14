@@ -1,5 +1,6 @@
 from app import app, db
 from app.models import User, Post
+from app import cli
 
 #上下文管理器
 @app.shell_context_processor

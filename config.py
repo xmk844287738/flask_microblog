@@ -21,3 +21,6 @@ class Config:
 
     ADMINS = ['your-email@example.com']
     POSTS_PER_PAGE = 3  # 每页显示三条帖子
+
+    # 网站支持的语言
+    LANGUAGES = ['en', 'zh']  # 注意：不要填写zh_CN。有坑！

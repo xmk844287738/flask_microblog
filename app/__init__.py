@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, request
+from flask_babel import Babel
 from flask_mail import Mail
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -7,7 +8,6 @@ from flask_sqlalchemy import SQLAlchemy
 from config import Config
 # from app import routes,models,errors
 from flask_bootstrap import Bootstrap
-
 
 
 app = Flask(__name__)
@@ -30,6 +30,13 @@ bootstrap = Bootstrap(app)
 
 # 引入处理时间模块
 moment = Moment(app)
+
+# 引入翻译模块
+babel = Babel(app)
+@babel.localeselector
+def get_locale():
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
+
 
 
 # 防止循环导入

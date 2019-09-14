@@ -5,8 +5,10 @@ from app import db
 from app import app # 从app包中导入 app这个实例
 from app.email import send_password_reset_email
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm, PostForm
-from app.models import User,Post
+from app.models import User, Post
 from datetime import datetime
+from flask_babel import _
+
 
 
 # 最后一次登录的时间视图函数
@@ -27,7 +29,7 @@ def index():
         post = Post(body=form.post.data, author=current_user)
         db.session.add(post)
         db.session.commit()
-        flash('Your post is now live!')
+        flash(_('Your post is now live!'))
         return redirect(url_for('index'))   # redirect 重定向 两次请求; 避免无意中刷新页面时，插入重复的帖子
     #get 请求
     # posts = [  # 创建一个列表：帖子。里面元素是两个字典，每个字典里元素还是字典，分别作者、帖子内容。
@@ -50,6 +52,7 @@ def index():
     posts = current_user.followed_posts().paginate(page, app.config['POSTS_PER_PAGE'], False)
     next_url = url_for('index', page=posts.next_num) if posts.has_next else None
     prev_url = url_for('index', page=posts.prev_num) if posts.has_prev else None
+    # render_template 一次请求
     return render_template('index.html', title='Home Page', form=form, posts=posts.items, next_url=next_url,prev_url=prev_url)
 
 
@@ -87,7 +90,7 @@ def login():
         # 向数据库查询有无当前用户的信息,'form.username.data'用户在表单中输入的用户名
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password')
+            flash(_('Invalid username or password'))
             # 登陆无效，重定向至登录页
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)    #form.remember_me.data,使用Cookie记住用户信息
@@ -119,9 +122,8 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        msg = 'Congratulations, you are now a registered user!'
-        flash(msg)
-        print(msg)
+        # msg = 'Congratulations, you are now a registered user!'
+        flash(_('Congratulations, you are now a registered user!'))
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
@@ -153,7 +155,7 @@ def edit_profile():
         current_user.about_me = form.about_me.data
         db.session.commit()
 
-        flash('Your changes have been saved.')
+        flash(_('Your changes have been saved.'))
         return redirect(url_for('edit_profile'))
     elif request.method == 'GET':
         form.username.data = current_user.username
@@ -169,7 +171,7 @@ def follow(username):
         flash('User {} not found.'.format(username))
         return redirect(url_for('index'))
     if user == current_user:
-        flash('You cannot follow yourself!')
+        flash(_('You cannot follow yourself!'))
         return redirect(url_for('user', username=username))
     current_user.follow(user)
     db.session.commit()
@@ -186,7 +188,7 @@ def unfollow(username):
         return redirect(url_for('index'))
     #current_user 判断是否为当前用户
     if user == current_user:
-        flash('You cannot unfollow yourself!')
+        flash(_('You cannot unfollow yourself!'))
         return redirect(url_for('user', username=username))
     current_user.unfollow(user)
     db.session.commit()
@@ -203,7 +205,7 @@ def reset_password_request():
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             send_password_reset_email(user)
-        flash('Check your email for the instructions to reset your password')
+        flash(_('Check your email for the instructions to reset your password'))
         return redirect(url_for('login'))
     return render_template('reset_password_request.html', title='Reset Password', form=form)
 
@@ -219,7 +221,7 @@ def reset_password(token):
     if form.validate_on_submit():   #进行表单验证
         user.set_password(form.password.data)
         db.session.commit()
-        flash('Your password has been reset.')
+        flash(_('Your password has been reset.'))
         return redirect(url_for('login'))
     return render_template('reset_password.html', form=form)
 
