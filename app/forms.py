@@ -32,7 +32,7 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Please use a different username.')
 
 
-# 无法查询数据库的用户邮箱信息!!
+# 解决注册时无法向数据库验证有无重复邮箱地址信息的问题
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         # print(user)
