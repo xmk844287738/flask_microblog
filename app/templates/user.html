@@ -1,47 +1,58 @@
+
 {% extends "base.html" %}
 
-{% block content %}
-    <table>
-        <tr valign="top">
-            <td><img src="{{ user.avatar(128) }}"></td>
+{% block app_content %}
+    <table class="table table-hover">
+        <tr>
+            <td width="256px"><img src="{{ user.avatar(256) }}"></td>
             <td>
-                <h1>User: {{ user.username }}</h1>
-{#            用户的签名#}
-                 {% if user.about_me %}
+                <h1>User:{{ user.username }}</h1>
+{#                 用户的签名#}
+                {% if user.about_me %}
                     <p>{{ user.about_me }}</p>
                 {% endif %}
-{#                用户上一次登陆的时间#}
+{#                 用户上一次登陆的时间#}
                 {% if user.last_seen %}
                     <p>Last seen on:{{ user.last_seen }}</p>
                 {% endif %}
-
-                <p>{{ user.followers.count() }} followers, {{ user.followed.count() }} following.</p>
-
 {#                判断当前浏览对象用户是不是属于此帖子的用户#}
                 {% if user == current_user %}
-                    <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
-{#                  如果当前浏览的用户不自己，即可关注  #}
+                    <p>
+                        <a href="{{ url_for('edit_profile') }}">Edit your profile</a>
+                    </p>
+{#                    如果当前浏览的用户不自己，即可关注#}
                 {% elif not current_user.is_following(user) %}
-                    <p><a href="{{ url_for('follow', username=user.username) }}">Follow</a></p>
-                {% else %}
+                    <p>
+                        <a href="{{ url_for('follow', username=user.username) }}">Follow</a>
+                    </p>
 {#                    如果已经关注，可以取消关注#}
-                    <p><a href="{{ url_for('unfollow', username=user.username) }}">Unfollow</a></p>
+                {% else %}
+                    <p>
+                        <a href="{{ url_for('unfollow', username=user.username) }}">Unfollow</a>
+                    </p>
                 {% endif %}
             </td>
         </tr>
     </table>
-    <hr>
-{#    循环用户所发的帖子#}
-    {% for post in posts %}
-{#        user.html模板要调用_post.html的子模板，得使用Jinja2include语句#}
-        {% include "_post.html" %}
-    {% endfor%}
 
-    {#    帖子分页导航#}
-    {% if prev_url %}
-    <a href="{{ prev_url }}">Newer posts</a>
-    {% endif %}
-    {% if next_url %}
-    <a href="{{ next_url }}">Older posts</a>
-    {% endif %}
-{% endblock %}
+{#循环输出用户的帖子#}
+    {% for post in posts %}
+{#        user.html模板要调用_post.html的子模板，要使用Jinja2include语句#}
+        {% include '_post.html' %}
+    {% endfor%}
+{#    帖子分页导航#}
+    <nav aria-label="...">
+        <ul class="pager">
+            <li class="previous{% if not prev_url %} disabled{% endif %}">
+                <a href="{{ prev_url or '#' }}">
+                    <span aria-hidden="true">&larr;</span> Newer posts
+                </a>
+            </li>
+            <li class="next{% if not next_url %} disabled{% endif %}">
+                <a href="{{ next_url or '#' }}">
+                    Older posts <span aria-hidden="true">&rarr;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+{% endblock%}

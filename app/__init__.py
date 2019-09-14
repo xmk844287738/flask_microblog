@@ -4,6 +4,10 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
+# from app import routes,models,errors
+from flask_bootstrap import Bootstrap
+
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -19,6 +23,7 @@ login.login_view = 'login'
 
 # 创建一个Mail类
 mail = Mail(app)
+bootstrap = Bootstrap(app)
 
 
 # 防止循环导入
