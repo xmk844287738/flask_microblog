@@ -1,5 +1,4 @@
 # form表单
-
 from flask_wtf import FlaskForm #从flask_wtf包中导入FlaskForm类
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField , SubmitField  # 导入这些类
 from wtforms.validators import DataRequired, EqualTo, ValidationError, Length
@@ -32,7 +31,7 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Please use a different username.')
 
 
-# 解决注册时无法向数据库验证有无重复邮箱地址信息的问题
+# 引入 flask-bootstrap 解决注册时无法向数据库验证有无重复邮箱地址信息的问题
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         # print(user)
